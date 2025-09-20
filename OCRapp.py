@@ -108,14 +108,33 @@ class ExamAssistant:
         
         # Question generation prompt template
         self.question_prompt = PromptTemplate(
-            input_variables=["topic", "marks", "variation_seed"],
+            input_variables=["topic", "marks", "variation_seed", "class_level", "subject"],
             template="""
             Generate a UNIQUE, creative, exam-style question on the topic "{topic}" worth exactly {marks} marks.
+            Class: {class_level}, Subject: {subject}
             
             VARIATION REQUIREMENT: Create a DIFFERENT question each time, even for the same topic and marks.
             Use the variation seed {variation_seed} to ensure uniqueness.
             
-            CRITICAL: The question MUST match the exact mark allocation specified:
+            MANDATORY SPECIAL CASE - If Class is "Class 10" AND Subject "Social Studies" AND marks is 8:
+            You MUST ONLY generate questions using these EXACT simple formats given below.
+            
+            Format 1: "Write down the advantages and disadvantages of [specific aspect related to {topic}]."
+            Example: "Write down the advantages and disadvantages of the people when they migrate."
+            
+            Format 2: "How does [social issue] affect when [relevant context related to {topic}]?"
+            Example: "How does gender bias affect when the women work outside of the homes?"
+            
+            Format 3: "Read the following paragraph and write your opinion on it.
+            *Paragraph:*
+            [Write a 3-4 line paragraph about {topic} covering social/economic/political aspects]"
+            
+            Format 4: "Prepare a pamphlet on importance of [aspect related to {topic}]."
+            Example: "Prepare a pamphlet on importance of food security."
+            
+            CRITICAL: For Class 10 Social Studies 8-mark questions, IGNORE all other 8-mark formats below. Use ONLY the 4 simple formats above with the exact phrasing structure shown in examples.
+            
+            For ALL OTHER cases (different class, subject, or marks), use the standard formats below:
             
             - For 2 marks: Choose from these varied approaches:
               * Definition: "Define {topic}." / "What is meant by {topic}?"
@@ -131,7 +150,7 @@ class ExamAssistant:
               * Cause and effect: "Explain the causes and effects related to {topic}."
               * Problem-solving: "Solve a problem related to {topic} step by step."
             
-            - For 8 marks: Choose from these comprehensive approaches:
+            - For 8 marks (NOT for Class 10 Social Studies 8 marks): Choose from these comprehensive approaches:
               * Deep analysis: "Analyze the concept of {topic} in detail. Discuss its key features, significance, and real-world applications. Evaluate its advantages and disadvantages with suitable examples."
               * Critical examination: "Critically examine {topic}. Explain its fundamental principles, analyze its importance, and discuss its various applications with detailed examples."
               * Comprehensive discussion: "Discuss {topic} comprehensively. Analyze its key components, evaluate its significance, and examine its practical applications in different scenarios."
@@ -139,27 +158,7 @@ class ExamAssistant:
               * Case study approach: "Using {topic} as a case study, analyze its development, current status, and future potential. Discuss the challenges and opportunities associated with it."
               * Research-based question: "Investigate the role of {topic} in modern society. Analyze its evolution, current applications, and predict its future developments with supporting evidence."
             
-            QUESTION VARIATION STRATEGIES:
-            1. Use different command words: Define, Explain, Analyze, Evaluate, Discuss, Compare, Contrast, Examine, Investigate, Assess, Justify, Describe, Illustrate
-            2. Vary the focus: theoretical aspects, practical applications, historical development, future prospects, societal impact, advantages/disadvantages
-            3. Change question structure: direct questions, problem-solving scenarios, case studies, comparative analyses
-            4. Include different contexts: real-world applications, historical examples, current events, future predictions
-            5. Vary the perspective: student view, teacher view, researcher view, societal view, global view
-            
-            RANDOMIZATION ELEMENTS:
-            - Mix different question formats within the same mark range
-            - Use varied vocabulary and phrasing
-            - Include different aspects of the topic each time
-            - Change the emphasis and focus areas
-            - Incorporate current and relevant contexts
-            
-            IMPORTANT for 8-mark questions:
-            - Must use multiple command words (analyze, discuss, evaluate, examine, etc.)
-            - Must ask for detailed explanation + analysis + examples
-            - Must be comprehensive enough to require extensive writing
-            - Should cover multiple aspects of the topic
-            
-            Generate ONLY the question text that exactly matches the {marks} mark requirement. Ensure the question is DIFFERENT from typical textbook questions. No additional text.
+            Generate ONLY the question text. For Class 10 Social Studies 8-mark questions, use SIMPLE and DIRECT language as shown in the mandatory formats above with the EXACT phrasing structure.
             """
         )
         
@@ -203,9 +202,198 @@ class ExamAssistant:
             """
         )
     
-    def generate_question(self, topic, marks):
+    def generate_class10_social_studies_8mark_question(self, topic):
+        """Generate Class 10 Social Studies 8-mark questions using AI to ensure topic relevance and proper formatting"""
+        try:
+            # Initialize OpenAI client
+            if not hasattr(self, 'client') or self.client is None:
+                self.client = OpenAI(api_key=st.secrets.get("OPENAI_API_KEY"))
+            
+            # Add randomization for variety
+            import random
+            from datetime import datetime
+            
+            # Create variation elements to ensure different questions each time
+            current_time = datetime.now()
+            random_seed = random.randint(1000, 9999)
+            variation_elements = [
+                f"Question variation #{random_seed}",
+                f"Generated at {current_time.strftime('%H:%M:%S')}",
+                random.choice(['analytical', 'practical', 'theoretical', 'comprehensive', 'detailed']),
+                random.choice(['modern context', 'contemporary society', 'current scenario', 'present-day situation']),
+                random.choice(['students should analyze', 'learners must evaluate', 'pupils need to examine', 'candidates should assess'])
+            ]
+            
+            # Randomly select format emphasis for variety
+            format_styles = [
+                {
+                    "emphasis": "advantages and disadvantages",
+                    "instruction": "Focus on creating an advantages-disadvantages question",
+                    "example": "Write down the advantages and disadvantages of the people when they migrate."
+                },
+                {
+                    "emphasis": "cause and effect",
+                    "instruction": "Focus on creating a cause-effect relationship question",
+                    "example": "How does gender bias affect when the women work outside of the homes?"
+                },
+                {
+                    "emphasis": "opinion and analysis",
+                    "instruction": "Focus on creating a paragraph analysis question",
+                    "example": "Read the following paragraph and write your opinion on it."
+                },
+                {
+                    "emphasis": "pamphlet creation",
+                    "instruction": "Focus on creating a pamphlet preparation question",
+                    "example": "Prepare a pamphlet on importance of food security."
+                }
+            ]
+            
+            # Randomly select a format style for variation
+            selected_style = random.choice(format_styles)
+            
+            # Add contextual variations for the same topic
+            topic_contexts = [
+                f"{topic} in rural areas",
+                f"{topic} in urban development",
+                f"{topic} and economic growth",
+                f"{topic} and social change",
+                f"{topic} in modern India",
+                f"{topic} and sustainable development",
+                f"{topic} and government policies",
+                f"{topic} and community welfare"
+            ]
+            
+            # Sometimes use the base topic, sometimes use a context variation
+            topic_variant = random.choice([topic, random.choice(topic_contexts)])
+            
+            # Create a dynamic, randomized prompt
+            prompt = f"""
+You are an expert Class 10 Social Studies teacher creating 8-mark examination questions. 
+{variation_elements[2].capitalize()} approach required.
+
+Generate ONE unique question about: "{topic_variant}"
+{selected_style['instruction']} but you may use any of the 4 formats if more suitable.
+
+STRICT REQUIREMENTS:
+1. The question MUST follow one of these 4 exact formats:
+   - "Write down the advantages and disadvantages of [topic-relevant phrase]."
+   - "How does [social factor] affect when [topic-relevant context]?"
+   - "Read the following paragraph and write your opinion on it.\n*Paragraph:*\n[topic-relevant paragraph]"
+   - "Prepare a pamphlet on importance of [topic-relevant aspect]."
+
+2. Make it specifically relevant to "{topic}" in {variation_elements[3]}
+3. Use proper Social Studies terminology and concepts
+4. Ensure {variation_elements[4]} the topic thoroughly (8-mark level)
+5. Make it engaging for Class 10 students
+6. Connect to real-world applications
+
+PREFERRED STYLE: {selected_style['emphasis']}
+EXAMPLE: {selected_style['example']}
+
+Variation ID: {variation_elements[0]} | Time: {variation_elements[1]}
+
+Generate ONE unique question following the exact format. Make it directly related to "{topic}" and suitable for Class 10 Social Studies.
+
+Return ONLY the question text, no additional explanation.
+"""
+
+            # Use higher temperature and add seed for more variation
+            response = self.client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": f"You are an expert Class 10 Social Studies teacher generating unique questions. Current session: {random_seed}. Ensure variety in question generation."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=350,
+                temperature=0.9,  # Higher temperature for more variety
+                top_p=0.9,       # Add top_p for additional randomness
+                frequency_penalty=0.3,  # Reduce repetitive patterns
+                presence_penalty=0.3    # Encourage new topics/approaches
+            )
+            
+            generated_question = response.choices[0].message.content.strip()
+            
+            # Basic validation to ensure the question follows one of the required formats
+            format_keywords = [
+                "advantages and disadvantages",
+                "How does",
+                "Read the following paragraph",
+                "Prepare a pamphlet"
+            ]
+            
+            # Check if the generated question contains at least one format keyword
+            if any(keyword.lower() in generated_question.lower() for keyword in format_keywords):
+                return generated_question
+            else:
+                # Fallback: if the AI didn't follow format, create a topic-specific question using one format
+                return self._generate_fallback_question(topic)
+                
+        except Exception as e:
+            st.error(f"Error generating AI question: {str(e)}")
+            # Fallback to a manually created question
+            return self._generate_fallback_question(topic)
+    
+    def _generate_fallback_question(self, topic):
+        """Generate a fallback question when AI generation fails"""
+        import random
+        from datetime import datetime
+        
+        # Add time-based and random elements for variety
+        current_time = datetime.now()
+        time_seed = int(current_time.strftime('%S')) + random.randint(1, 100)
+        
+        # Multiple variations for each format to ensure variety
+        fallback_formats = [
+            # Advantages-Disadvantages variations
+            f"Write down the advantages and disadvantages of {topic.lower()} in modern society.",
+            f"Write down the advantages and disadvantages of implementing {topic.lower()} in rural areas.",
+            f"Write down the advantages and disadvantages of {topic.lower()} for economic development.",
+            f"Write down the advantages and disadvantages when communities adopt {topic.lower()}.",
+            
+            # Cause-Effect variations  
+            f"How does {topic.lower()} affect when communities try to achieve sustainable development?",
+            f"How does government policy on {topic.lower()} affect when people plan for their future?",
+            f"How does {topic.lower()} affect when society undergoes modernization?",
+            f"How does {topic.lower()} affect when regions focus on economic growth?",
+            
+            # Pamphlet variations
+            f"Prepare a pamphlet on importance of {topic.lower()} for social and economic development.",
+            f"Prepare a pamphlet on importance of {topic.lower()} in modern India.",
+            f"Prepare a pamphlet on importance of understanding {topic.lower()} for students.",
+            f"Prepare a pamphlet on importance of {topic.lower()} for sustainable future.",
+            
+            # Paragraph variations
+            f"Read the following paragraph and write your opinion on it.\n*Paragraph:*\n{topic} plays a crucial role in shaping society and economy. It influences various aspects of human life including social relationships, economic activities, and environmental sustainability. Understanding {topic.lower()} helps us make better decisions for community development and individual growth.",
+            f"Read the following paragraph and write your opinion on it.\n*Paragraph:*\n{topic} has become increasingly important in modern India. It affects how people live, work, and interact with each other. The government and citizens must work together to ensure that {topic.lower()} contributes positively to national development and social welfare.",
+            f"Read the following paragraph and write your opinion on it.\n*Paragraph:*\n{topic} is a key factor in determining the progress of any nation. It impacts economic growth, social harmony, and environmental protection. Young people especially need to understand {topic.lower()} to become responsible citizens and contribute to building a better future.",
+        ]
+        
+        # Use time and random elements to select different questions
+        selection_index = (time_seed + random.randint(1, 50)) % len(fallback_formats)
+        return fallback_formats[selection_index]
+    
+    def generate_question(self, topic, marks, class_level=None, subject=None):
         """Generate an exam question based on topic and marks"""
         try:
+            # Special handling for Class 10 Social Studies 8-mark questions
+            if (class_level == "Class 10" and 
+                subject and "Social" in subject and 
+                marks == 8):
+                # Use the dedicated function for exact format
+                question = self.generate_class10_social_studies_8mark_question(topic)
+                
+                # Store in conversation history
+                from datetime import datetime
+                current_time = datetime.now()
+                self.conversation_history.append({
+                    "input": f"Generate Class 10 Social Studies question for {topic} ({marks} marks)",
+                    "output": question,
+                    "timestamp": current_time.isoformat()
+                })
+                
+                return question
+            
+            # For all other cases, use the existing AI-based generation
             # Import random and datetime for variation
             import random
             from datetime import datetime
@@ -220,11 +408,13 @@ class ExamAssistant:
             ]
             variation_seed = f"{'-'.join(map(str, random_elements))}"
             
-            # Format prompt with variation seed
+            # Format prompt with variation seed and additional parameters
             prompt = self.question_prompt.format(
                 topic=topic, 
                 marks=marks, 
-                variation_seed=variation_seed
+                variation_seed=variation_seed,
+                class_level=class_level or "Unknown",
+                subject=subject or "Unknown"
             )
             
             # Adjust max_tokens based on mark allocation
@@ -243,8 +433,15 @@ class ExamAssistant:
                 # Enhanced system message for better question generation with variation emphasis
                 system_message = """You are an experienced educator creating diverse exam questions. 
                 CRITICAL: Generate UNIQUE, VARIED questions every time, even for the same topic and marks.
-                Use creative approaches, different question styles, and varied vocabulary.
-                For 8-mark questions, create comprehensive questions requiring detailed analysis and evaluation.
+                
+                SPECIAL MANDATORY RULE: If the input specifies "Class 10" and subject contains "Social" and marks is 8:
+                - COMPLETELY IGNORE all analytical 8-mark formats 
+                - Use ONLY the 4 simple formats provided: advantages/disadvantages, how does X affect Y, paragraph opinion, or pamphlet
+                - Keep the language simple and direct as shown in examples
+                - DO NOT use words like "analyze", "critically examine", "evaluate", "comprehensive"
+                - DO NOT create long complex questions
+                
+                For all other cases, use creative approaches, different question styles, and varied vocabulary.
                 Avoid repetitive patterns and ensure each question feels fresh and engaging.
                 Consider different perspectives, contexts, and applications of the topic."""
                 
@@ -262,8 +459,15 @@ class ExamAssistant:
                 # Enhanced system message for better question generation with variation emphasis
                 system_message = """You are an experienced educator creating diverse exam questions. 
                 CRITICAL: Generate UNIQUE, VARIED questions every time, even for the same topic and marks.
-                Use creative approaches, different question styles, and varied vocabulary.
-                For 8-mark questions, create comprehensive questions requiring detailed analysis and evaluation.
+                
+                SPECIAL MANDATORY RULE: If the input specifies "Class 10" and subject contains "Social" and marks is 8:
+                - COMPLETELY IGNORE all analytical 8-mark formats 
+                - Use ONLY the 4 simple formats provided: advantages/disadvantages, how does X affect Y, paragraph opinion, or pamphlet
+                - Keep the language simple and direct as shown in examples
+                - DO NOT use words like "analyze", "critically examine", "evaluate", "comprehensive"
+                - DO NOT create long complex questions
+                
+                For all other cases, use creative approaches, different question styles, and varied vocabulary.
                 Avoid repetitive patterns and ensure each question feels fresh and engaging.
                 Consider different perspectives, contexts, and applications of the topic."""
                 
@@ -281,12 +485,12 @@ class ExamAssistant:
             # Additional validation for the generated question
             if not question or len(question.strip()) < 10:
                 # Enhanced fallback with variation
-                fallback_options = self._get_fallback_questions(topic, marks)
+                fallback_options = self._get_fallback_questions(topic, marks, class_level, subject)
                 question = random.choice(fallback_options)
                 st.warning(f"⚠️ Using fallback question for {marks} marks due to API response issue.")
             
-            # Additional validation specifically for 8-mark questions
-            elif marks == 8:
+            # Additional validation specifically for 8-mark questions (except Class 10 Social Studies)
+            elif (marks == 8 and not (class_level == "Class 10" and subject and "Social" in subject)):
                 # Check if the 8-mark question is comprehensive enough
                 question_lower = question.lower()
                 comprehensive_words = ['analyze', 'analyse', 'discuss', 'evaluate', 'examine', 'critically', 'comprehensively', 'detail', 'detailed']
@@ -316,16 +520,28 @@ class ExamAssistant:
             error_msg = f"Error generating {marks}-mark question for '{topic}': {str(e)}"
             st.error(error_msg)
             
-            # Provide varied fallback questions even on complete failure
-            fallback_options = self._get_fallback_questions(topic, marks)
-            fallback_question = random.choice(fallback_options)
+            # Special handling for Class 10 Social Studies 8-mark questions even in fallback
+            if (class_level == "Class 10" and 
+                subject and "Social" in subject and 
+                marks == 8):
+                fallback_question = self.generate_class10_social_studies_8mark_question(topic)
+            else:
+                # Provide varied fallback questions for other cases
+                fallback_options = self._get_fallback_questions(topic, marks, class_level, subject)
+                fallback_question = random.choice(fallback_options)
                 
             st.info(f"🔄 Using fallback question: {fallback_question}")
             return fallback_question
     
-    def _get_fallback_questions(self, topic, marks):
+    def _get_fallback_questions(self, topic, marks, class_level=None, subject=None):
         """Get varied fallback questions based on marks"""
-        if marks == 8:
+        # Special handling for Class 10 Social Studies 8-mark questions
+        if (marks == 8 and 
+            class_level == "Class 10" and 
+            subject and "Social" in subject):
+            # Return the specialized question directly
+            return [self.generate_class10_social_studies_8mark_question(topic)]
+        elif marks == 8:
             return self._get_enhanced_8mark_questions(topic)
         elif marks == 4:
             return [
@@ -536,10 +752,29 @@ def main():
                 help="Choose the mark allocation for the question"
             )
         
+        # Additional inputs for class and subject
+        col3, col4 = st.columns([1, 1])
+        
+        with col3:
+            class_level = st.selectbox(
+                "Select class:",
+                options=["Class 6", "Class 7", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12"],
+                index=4,  # Default to Class 10
+                help="Select the class level for the question"
+            )
+        
+        with col4:
+            subject = st.selectbox(
+                "Select subject:",
+                options=["Mathematics", "Science", "Social Studies", "English", "Hindi", "Physics", "Chemistry", "Biology", "History", "Geography", "Political Science", "Economics"],
+                index=2,  # Default to Social Studies
+                help="Select the subject for the question"
+            )
+        
         if st.button("🎯 Generate Question", type="primary"):
             if topic:
                 with st.spinner("Generating question..."):
-                    question = st.session_state.assistant.generate_question(topic, marks)
+                    question = st.session_state.assistant.generate_question(topic, marks, class_level, subject)
                     
                     if question:
                         st.session_state.current_question = question

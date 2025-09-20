@@ -1390,7 +1390,9 @@ def generate_writing_question():
             # Generate question based on selected topic
             question = assistant.generate_question(
                 topic=topic,
-                marks=marks
+                marks=marks,
+                class_level=st.session_state.selected_class,
+                subject=st.session_state.selected_subject
             )
             
             # Enhanced debugging for question generation
@@ -2008,7 +2010,9 @@ def generate_final_writing_question():
                 # Generate question based on selected topic with progressive marks
                 question = assistant.generate_question(
                     topic=st.session_state.selected_topic,
-                    marks=marks
+                    marks=marks,
+                    class_level=st.session_state.selected_class,
+                    subject=st.session_state.selected_subject
                 )
                 
                 if question and question.strip():
